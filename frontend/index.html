@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>환자 관리 시스템 - AIX병원</title>
+    <link rel="stylesheet" href="hospital-style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">A</div>
+                <h2>AIX병원</h2>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">●</span>
+                    <span>대시보드</span>
+                </a>
+                <a href="#" class="nav-item" data-page="patients">
+                    <span class="nav-icon">●</span>
+                    <span>환자 검색</span>
+                </a>
+                <a href="#" class="nav-item" data-page="appointments">
+                    <span class="nav-icon">●</span>
+                    <span>예약 관리</span>
+                </a>
+                <a href="#" class="nav-item" data-page="visits">
+                    <span class="nav-icon">●</span>
+                    <span>진료 기록</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">관</div>
+                    <div class="user-details">
+                        <p class="user-name">관리자</p>
+                        <p class="user-role">원무과</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- 메인 컨텐츠 -->
+        <main class="main-content">
+            <!-- 헤더 -->
+            <header class="main-header">
+                <div class="header-left">
+                    <h1 id="pageTitle">대시보드</h1>
+                    <p class="current-date" id="currentDate"></p>
+                </div>
+                
+                <!-- 빠른 검색 -->
+                <div class="quick-search">
+                    <input type="text" 
+                           id="quickSearchInput" 
+                           placeholder="환자 이름 또는 환자번호 검색..."
+                           class="search-input">
+                    <button class="search-btn" id="quickSearchBtn">검색</button>
+                </div>
+            </header>
+            
+            <!-- 페이지 컨텐츠 -->
+            <div class="page-content" id="pageContent">
+                <!-- 대시보드 -->
+                <div id="dashboardPage" class="page active">
+                    <!-- 통계 카드 -->
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-icon patients"></div>
+                            <div class="stat-content">
+                                <p class="stat-label">전체 환자</p>
+                                <h3 class="stat-value" id="totalPatients">0</h3>
+                                <p class="stat-change">명</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon visits"></div>
+                            <div class="stat-content">
+                                <p class="stat-label">오늘 진료</p>
+                                <h3 class="stat-value" id="todayVisits">0</h3>
+                                <p class="stat-change">건</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon appointments"></div>
+                            <div class="stat-content">
+                                <p class="stat-label">오늘 예약</p>
+                                <h3 class="stat-value" id="todayAppointments">0</h3>
+                                <p class="stat-change">건</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon waiting"></div>
+                            <div class="stat-content">
+                                <p class="stat-label">대기 환자</p>
+                                <h3 class="stat-value" id="waitingPatients">0</h3>
+                                <p class="stat-change">명</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 최근 활동 -->
+                    <div class="recent-activity">
+                        <div class="section-header">
+                            <h2>최근 진료 현황</h2>
+                            <button class="btn-refresh" onclick="loadRecentVisits()">새로고침</button>
+                        </div>
+                        <div class="activity-list" id="recentActivity">
+                            <div class="loading">데이터를 불러오는 중...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 환자 검색 페이지 -->
+                <div id="patientsPage" class="page">
+                    <div class="search-container">
+                        <div class="search-header">
+                            <h2>환자 검색</h2>
+                            <button class="btn-primary" onclick="showNewPatientForm()">신규 환자 등록</button>
+                        </div>
+                        
+                        <div class="search-box-large">
+                            <input type="text" 
+                                   id="patientSearchInput" 
+                                   placeholder="환자 이름, 환자번호 또는 전화번호로 검색..."
+                                   class="search-input-large">
+                            <button class="search-btn-large" onclick="searchPatients()">검색</button>
+                        </div>
+                        
+                        <div class="search-results" id="searchResults">
+                            <p class="no-results">검색 결과가 여기에 표시됩니다</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 환자 상세 모달 -->
+    <div id="patientModal" class="modal">
+        <div class="modal-overlay" onclick="closeModal()"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 id="modalTitle">환자 정보</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- 환자 기본 정보 -->
+                <div class="patient-detail-header" id="patientDetailHeader">
+                    <!-- 동적 생성 -->
+                </div>
+                
+                <!-- 탭 메뉴 -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="visits">진료 이력</button>
+                    <button class="tab-btn" data-tab="appointments">예약 현황</button>
+                    <button class="tab-btn" data-tab="notes">메모</button>
+                </div>
+                
+                <!-- 탭 컨텐츠 -->
+                <div class="tab-panels">
+                    <div id="visitsPanel" class="tab-panel active">
+                        <!-- 진료 이력 -->
+                    </div>
+                    <div id="appointmentsPanel" class="tab-panel">
+                        <!-- 예약 현황 -->
+                    </div>
+                    <div id="notesPanel" class="tab-panel">
+                        <!-- 메모 -->
+                        <div class="notes-section">
+                            <textarea placeholder="환자 관련 메모를 입력하세요..." rows="10"></textarea>
+                            <button class="btn-primary mt-3">메모 저장</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">닫기</button>
+                <button class="btn-primary" onclick="showNewVisitForm()">새 진료 등록</button>
+                <button class="btn-primary" onclick="showNewAppointmentForm()">예약 추가</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 신규 환자 등록 모달 -->
+    <div id="newPatientModal" class="modal">
+        <div class="modal-overlay" onclick="closeNewPatientModal()"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>신규 환자 등록</h2>
+                <button class="modal-close" onclick="closeNewPatientModal()">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="newPatientForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="patientNo">환자번호 <span class="required">*</span></label>
+                            <input type="text" id="patientNo" name="patient_no" required 
+                                   placeholder="P2024XXX 형식">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="patientName">이름 <span class="required">*</span></label>
+                            <input type="text" id="patientName" name="name" required 
+                                   placeholder="환자 이름">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="birthDate">생년월일 <span class="required">*</span></label>
+                            <input type="date" id="birthDate" name="birth_date" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gender">성별 <span class="required">*</span></label>
+                            <select id="gender" name="gender" required>
+                                <option value="">선택하세요</option>
+                                <option value="M">남성</option>
+                                <option value="F">여성</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">연락처 <span class="required">*</span></label>
+                            <input type="tel" id="phone" name="phone" required 
+                                   placeholder="010-0000-0000"
+                                   oninput="formatPhoneInput(this)">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeNewPatientModal()">취소</button>
+                <button type="button" class="btn-primary" onclick="saveNewPatient()">등록</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 진료 등록 모달 -->
+    <div id="newVisitModal" class="modal">
+        <div class="modal-overlay" onclick="closeNewVisitModal()"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>진료 기록 등록</h2>
+                <button class="modal-close" onclick="closeNewVisitModal()">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- 환자 정보 표시 -->
+                <div class="patient-info-box">
+                    <strong>환자: </strong>
+                    <span id="visitPatientName"></span> 
+                    (<span id="visitPatientNo"></span>)
+                </div>
+                
+                <form id="newVisitForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="visitDate">진료일시 <span class="required">*</span></label>
+                            <input type="datetime-local" id="visitDate" name="visit_date" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="department">진료과 <span class="required">*</span></label>
+                            <select id="department" name="department" required>
+                                <option value="">선택하세요</option>
+                                <option value="내과">내과</option>
+                                <option value="외과">외과</option>
+                                <option value="정형외과">정형외과</option>
+                                <option value="소아과">소아과</option>
+                                <option value="산부인과">산부인과</option>
+                                <option value="이비인후과">이비인후과</option>
+                                <option value="안과">안과</option>
+                                <option value="피부과">피부과</option>
+                                <option value="신경과">신경과</option>
+                                <option value="정신과">정신과</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="doctorName">담당의사 <span class="required">*</span></label>
+                            <input type="text" id="doctorName" name="doctor_name" required 
+                                   placeholder="담당의사명">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="visitStatus">진료상태 <span class="required">*</span></label>
+                            <select id="visitStatus" name="status" required>
+                                <option value="완료">완료</option>
+                                <option value="대기">대기</option>
+                                <option value="진료중">진료중</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label for="diagnosis">진단내용 <span class="required">*</span></label>
+                            <textarea id="diagnosis" name="diagnosis" rows="4" required
+                                      placeholder="진단 및 처방 내용을 입력하세요"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeNewVisitModal()">취소</button>
+                <button type="button" class="btn-primary" onclick="saveNewVisit()">등록</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 예약 추가 모달 -->
+    <div id="newAppointmentModal" class="modal">
+        <div class="modal-overlay" onclick="closeNewAppointmentModal()"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>예약 등록</h2>
+                <button class="modal-close" onclick="closeNewAppointmentModal()">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- 환자 정보 표시 -->
+                <div class="patient-info-box">
+                    <strong>환자: </strong>
+                    <span id="appointmentPatientName"></span> 
+                    (<span id="appointmentPatientNo"></span>)
+                </div>
+                
+                <form id="newAppointmentForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="appointmentDate">예약일시 <span class="required">*</span></label>
+                            <input type="datetime-local" id="appointmentDate" name="appointment_date" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="appointmentDept">진료과 <span class="required">*</span></label>
+                            <select id="appointmentDept" name="department" required>
+                                <option value="">선택하세요</option>
+                                <option value="내과">내과</option>
+                                <option value="외과">외과</option>
+                                <option value="정형외과">정형외과</option>
+                                <option value="소아과">소아과</option>
+                                <option value="산부인과">산부인과</option>
+                                <option value="이비인후과">이비인후과</option>
+                                <option value="안과">안과</option>
+                                <option value="피부과">피부과</option>
+                                <option value="신경과">신경과</option>
+                                <option value="정신과">정신과</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="appointmentDoctor">담당의사 <span class="required">*</span></label>
+                            <input type="text" id="appointmentDoctor" name="doctor_name" required 
+                                   placeholder="담당의사명">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeNewAppointmentModal()">취소</button>
+                <button type="button" class="btn-primary" onclick="saveNewAppointment()">등록</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 알림 토스트 -->
+    <div id="toast" class="toast"></div>
+    
+    <script src="hospital-app.js"></script>
+</body>
+</html>
