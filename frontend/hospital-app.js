@@ -1,5 +1,5 @@
 // API 설정
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://192.168.0.114:8000';
 
 // 전역 상태
 let currentPatient = null;
